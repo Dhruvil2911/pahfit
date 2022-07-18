@@ -160,7 +160,6 @@ def eqws(comp_type, x_0, area, fwhm_stddev, obs_fit):
     continuum = np.nan_to_num(cont_model(lam))
 
     if comp_type == 'AreaDrude1D':
-        print("I run")
         drude = AreaDrude1D(area=area,
                         x_0=x_0,
                         fwhm=fwhm)

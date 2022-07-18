@@ -626,7 +626,7 @@ class PAHFITBase:
             elif isinstance(component, AreaDrude1D):
 
                 # Calculate feature strength.
-                strength = component.area.value
+                strength = component.area.value * 1e-12
 
                 strength_unc = None
 
@@ -666,7 +666,7 @@ class PAHFITBase:
             elif isinstance(component, AreaGaussian1D):
 
                 # Calculate feature strength.
-                strength = component.area.value
+                strength = component.area.value * 1e-12
 
                 strength_unc = None
 

@@ -1,10 +1,5 @@
-from astropy.modeling.functional_models import Gaussian1D
-from pahfit.component_models import BlackBody1D
 from pahfit.component_models import (
     BlackBody1D,
-    ModifiedBlackBody1D,
-    S07_attenuation,
-    att_Drude1D,
     AreaGaussian1D,
     AreaDrude1D
 )
@@ -12,7 +7,6 @@ import numpy as np
 
 from astropy import constants as const
 from astropy.table import Table
-from astropy.modeling.physical_models import Drude1D
 
 from scipy import integrate
 

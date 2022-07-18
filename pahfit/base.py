@@ -1,13 +1,15 @@
-from astropy.modeling.functional_models import Gaussian1D
+#from astropy.modeling.functional_models import Gaussian1D
 
 from pahfit.component_models import (
     BlackBody1D,
     ModifiedBlackBody1D,
     S07_attenuation,
     att_Drude1D,
+    AreaGaussian1D,
+    AreaDrude1D
 )
 from astropy.table import Table, vstack
-from astropy.modeling.physical_models import Drude1D
+#from astropy.modeling.physical_models import Drude1D
 
 from scipy import interpolate
 
@@ -191,18 +193,18 @@ class PAHFITBase:
             df = []
             for k in range(len(dust_features["names"])):
                 df.append(
-                    Drude1D(
+                    AreaDrude1D(
                         name=dust_features["names"][k],
-                        amplitude=dust_features["amps"][k],
+                        area=dust_features["area"][k],
                         x_0=dust_features["x_0"][k],
                         fwhm=dust_features["fwhms"][k],
                         bounds={
-                            "amplitude": dust_features["amps_limits"][k],
+                            "area": dust_features["area_limits"][k],
                             "x_0": dust_features["x_0_limits"][k],
                             "fwhm": dust_features["fwhms_limits"][k],
                         },
                         fixed={
-                            "amplitude": dust_features["amps_fixed"][k],
+                            "area": dust_features["area_fixed"][k],
                             "x_0": dust_features["x_0_fixed"][k],
                             "fwhm": dust_features["fwhms_fixed"][k],
                         },
@@ -220,13 +222,13 @@ class PAHFITBase:
             h2 = []
             for k in range(len(h2_features["names"])):
                 h2.append(
-                    Gaussian1D(
+                    AreaGaussian1D(
                         name=h2_features["names"][k],
-                        amplitude=h2_features["amps"][k],
+                        area=h2_features["area"][k],
                         mean=h2_features["x_0"][k],
                         stddev=h2_features["fwhms"][k] / 2.355,
                         bounds={
-                            "amplitude": h2_features["amps_limits"][k],
+                            "area": h2_features["area_limits"][k],
                             "mean": h2_features["x_0_limits"][k],
                             "stddev": (
                                 h2_features["fwhms"][k] * 0.9 / 2.355,
@@ -234,7 +236,7 @@ class PAHFITBase:
                             ),
                         },
                         fixed={
-                            "amplitude": h2_features["amps_fixed"][k],
+                            "area": h2_features["area_fixed"][k],
                             "mean": h2_features["x_0_fixed"][k],
                             "stddev": h2_features["fwhms_fixed"][k],
                         },
@@ -251,13 +253,13 @@ class PAHFITBase:
             ions = []
             for k in range(len(ion_features["names"])):
                 ions.append(
-                    Gaussian1D(
+                    AreaGaussian1D(
                         name=ion_features["names"][k],
-                        amplitude=ion_features["amps"][k],
+                        area=ion_features["area"][k],
                         mean=ion_features["x_0"][k],
                         stddev=ion_features["fwhms"][k] / 2.355,
                         bounds={
-                            "amplitude": ion_features["amps_limits"][k],
+                            "area": ion_features["area_limits"][k],
                             "mean": ion_features["x_0_limits"][k],
                             "stddev": (
                                 ion_features["fwhms"][k] * 0.9 / 2.355,
@@ -265,7 +267,7 @@ class PAHFITBase:
                             ),
                         },
                         fixed={
-                            "amplitude": ion_features["amps_fixed"][k],
+                            "area": ion_features["area_fixed"][k],
                             "mean": ion_features["x_0_fixed"][k],
                             "stddev": ion_features["fwhms_fixed"][k],
                         },
@@ -398,14 +400,14 @@ class PAHFITBase:
 
         # now plot the dust bands and lines
         for cmodel in model:
-            if isinstance(cmodel, Gaussian1D):
+            if isinstance(cmodel, AreaGaussian1D):
                 ax.plot(
                     x_mod,
                     (cont_y + cmodel(x_mod)) * ext_model / x_mod,
                     "#DC267F",
                     alpha=0.5,
                 )
-            if isinstance(cmodel, Drude1D):
+            if isinstance(cmodel, AreaDrude1D):
                 ax.plot(
                     x_mod,
                     (cont_y + cmodel(x_mod)) * ext_model / x_mod,
@@ -530,10 +532,10 @@ class PAHFITBase:
                 "x_0_min",
                 "x_0_max",
                 "x_0_fixed",
-                "amp",
-                "amp_min",
-                "amp_max",
-                "amp_fixed",
+                "area",
+                "area_min",
+                "area_max",
+                "area_fixed",
                 "fwhm",
                 "fwhm_min",
                 "fwhm_max",
@@ -621,26 +623,24 @@ class PAHFITBase:
                         component.amplitude.fixed,
                     ]
                 )
-            elif isinstance(component, Drude1D):
+            elif isinstance(component, AreaDrude1D):
 
                 # Calculate feature strength.
-                strength = pah_feature_strength(
-                    component.amplitude.value, component.fwhm.value, component.x_0.value
-                )
+                strength = component.area.value
 
                 strength_unc = None
 
                 # Calculate feature EQW.
-                if strength != 0.0:
-                    eqw = eqws(
-                        comp_type,
-                        component.x_0.value,
-                        component.amplitude.value,
-                        component.fwhm,
-                        obs_fit,
-                    )
-                else:
-                    eqw = 0.0
+                # if strength != 0.0:
+                #     eqw = eqws(
+                #         comp_type,
+                #         component.x_0.value,
+                #         component.area.value,
+                #         component.fwhm,
+                #         obs_fit,
+                #     )
+                # else:
+                eqw = 0.0
 
                 line_table.add_row(
                     [
@@ -650,10 +650,10 @@ class PAHFITBase:
                         component.x_0.bounds[0],
                         component.x_0.bounds[1],
                         component.x_0.fixed,
-                        component.amplitude.value,
-                        component.amplitude.bounds[0],
-                        component.amplitude.bounds[1],
-                        component.amplitude.fixed,
+                        component.area.value,
+                        component.area.bounds[0],
+                        component.area.bounds[1],
+                        component.area.fixed,
                         component.fwhm.value,
                         component.fwhm.bounds[0],
                         component.fwhm.bounds[1],
@@ -663,28 +663,24 @@ class PAHFITBase:
                         eqw,
                     ]
                 )
-            elif isinstance(component, Gaussian1D):
+            elif isinstance(component, AreaGaussian1D):
 
                 # Calculate feature strength.
-                strength = line_strength(
-                    component.amplitude.value,
-                    component.mean.value,
-                    component.stddev.value,
-                )
+                strength = component.area.value
 
                 strength_unc = None
 
                 # Calculate feature EQW.
-                if strength != 0.0:
-                    eqw = eqws(
-                        comp_type,
-                        component.mean.value,
-                        component.amplitude.value,
-                        component.stddev.value,
-                        obs_fit,
-                    )
-                else:
-                    eqw = 0.0
+                # if strength != 0.0:
+                #     eqw = eqws(
+                #         comp_type,
+                #         component.mean.value,
+                #         component.area.value,
+                #         component.stddev.value,
+                #         obs_fit,
+                #     )
+                # else:
+                eqw = 0.0
 
                 line_table.add_row(
                     [
@@ -694,10 +690,10 @@ class PAHFITBase:
                         component.mean.bounds[0],
                         component.mean.bounds[1],
                         component.mean.fixed,
-                        component.amplitude.value,
-                        component.amplitude.bounds[0],
-                        component.amplitude.bounds[1],
-                        component.amplitude.fixed,
+                        component.area.value,
+                        component.area.bounds[0],
+                        component.area.bounds[1],
+                        component.area.fixed,
                         2.355 * component.stddev.value,
                         2.355 * component.stddev.bounds[0],
                         2.355 * component.stddev.bounds[1],
@@ -818,11 +814,11 @@ class PAHFITBase:
                 t["x_0_min"][df_ind].data, t["x_0_max"][df_ind].data
             ),
             "x_0_fixed": _ingest_fixed(t["x_0_fixed"][df_ind].data),
-            "amps": np.array(t["amp"][df_ind].data),
-            "amps_limits": _ingest_limits(
-                t["amp_min"][df_ind].data, t["amp_max"][df_ind].data
+            "area": np.array(t["area"][df_ind].data),
+            "area_limits": _ingest_limits(
+                t["area_min"][df_ind].data, t["area_max"][df_ind].data
             ),
-            "amps_fixed": _ingest_fixed(t["amp_fixed"][df_ind].data),
+            "area_fixed": _ingest_fixed(t["area_fixed"][df_ind].data),
             "fwhms": np.array(t["fwhm"][df_ind].data),
             "fwhms_limits": _ingest_limits(
                 t["fwhm_min"][df_ind].data, t["fwhm_max"][df_ind].data
@@ -838,11 +834,11 @@ class PAHFITBase:
                 t["x_0_min"][h2_ind].data, t["x_0_max"][h2_ind].data
             ),
             "x_0_fixed": _ingest_fixed(t["x_0_fixed"][h2_ind].data),
-            "amps": np.array(t["amp"][h2_ind].data),
-            "amps_limits": _ingest_limits(
-                t["amp_min"][h2_ind].data, t["amp_max"][h2_ind].data
+            "area": np.array(t["area"][h2_ind].data),
+            "area_limits": _ingest_limits(
+                t["area_min"][h2_ind].data, t["area_max"][h2_ind].data
             ),
-            "amps_fixed": _ingest_fixed(t["amp_fixed"][h2_ind].data),
+            "area_fixed": _ingest_fixed(t["area_fixed"][h2_ind].data),
             "fwhms": np.array(t["fwhm"][h2_ind].data),
             "fwhms_limits": _ingest_limits(
                 t["fwhm_min"][h2_ind].data, t["fwhm_max"][h2_ind].data
@@ -858,11 +854,11 @@ class PAHFITBase:
                 t["x_0_min"][ion_ind].data, t["x_0_max"][ion_ind].data
             ),
             "x_0_fixed": _ingest_fixed(t["x_0_fixed"][ion_ind].data),
-            "amps": np.array(t["amp"][ion_ind].data),
-            "amps_limits": _ingest_limits(
-                t["amp_min"][ion_ind].data, t["amp_max"][ion_ind].data
+            "area": np.array(t["area"][ion_ind].data),
+            "area_limits": _ingest_limits(
+                t["area_min"][ion_ind].data, t["area_max"][ion_ind].data
             ),
-            "amps_fixed": _ingest_fixed(t["amp_fixed"][ion_ind].data),
+            "area_fixed": _ingest_fixed(t["area_fixed"][ion_ind].data),
             "fwhms": np.array(t["fwhm"][ion_ind].data),
             "fwhms_limits": _ingest_limits(
                 t["fwhm_min"][ion_ind].data, t["fwhm_max"][ion_ind].data
@@ -945,24 +941,24 @@ class PAHFITBase:
         # set to half of the median (non-negative) intensity of the entire input spectrum
 
         # dust
-        for i, fix in enumerate(param_info[1]["amps_fixed"]):
+        for i, fix in enumerate(param_info[1]["area_fixed"]):
 
             if fix is False:
-                amp_guess = 0.5 * np.median(obs_y)
-                param_info[1]["amps"][i] = amp_guess
+                area_guess = 0.5 * np.median(obs_y)
+                param_info[1]["area"][i] = area_guess
 
         # h2
-        for i, fix in enumerate(param_info[2]["amps_fixed"]):
+        for i, fix in enumerate(param_info[2]["area_fixed"]):
 
             if fix is False:
-                amp_guess = 0.5 * np.median(obs_y)
-                param_info[2]["amps"][i] = amp_guess
+                area_guess = 0.5 * np.median(obs_y)
+                param_info[2]["area"][i] = area_guess
 
         # ion
-        for i, fix in enumerate(param_info[3]["amps_fixed"]):
+        for i, fix in enumerate(param_info[3]["area_fixed"]):
 
             if fix is False:
-                amp_guess = 0.5 * np.median(obs_y)
-                param_info[3]["amps"][i] = amp_guess
+                area_guess = 0.5 * np.median(obs_y)
+                param_info[3]["area"][i] = area_guess
 
         return param_info

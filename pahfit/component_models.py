@@ -4,7 +4,7 @@ from astropy.modeling.physical_models import Drude1D
 from astropy.modeling import Fittable1DModel
 from astropy.modeling import Parameter
 
-__all__ = ["BlackBody1D", "ModifiedBlackBody1D", "S07_attenuation", "att_Drude1D"]
+__all__ = ["BlackBody1D", "ModifiedBlackBody1D", "S07_attenuation", "att_Drude1D", "AreaGaussian1D", "AreaDrude1D"]
 
 
 class BlackBody1D(Fittable1DModel):
@@ -95,7 +95,7 @@ class S07_attenuation(Fittable1DModel):
         # new_spline_y = interpolate.splev(in_x_spline, spline_rep, der=0)
         new_spline_y = intfunc(in_x_spline)
 
-        nf = Drude1D(amplitude=0.4, x_0=18.0, fwhm=0.247 * 18.0)
+        nf = Drude1D(amplitude = 0.4, x_0=18.0, fwhm=0.247 * 18.0)
         in_x_drude = in_x[in_x >= max(kvt_wav)]
 
         ext = np.concatenate([new_spline_y, nf(in_x_drude)])
@@ -132,3 +132,35 @@ class att_Drude1D(Fittable1DModel):
             profile = Drude1D(amplitude=1.0, fwhm=fwhm, x_0=x_0)
             tau_x = tau * profile(x)
             return (1.0 - np.exp(-1.0 * tau_x)) / tau_x
+
+class AreaGaussian1D(Fittable1DModel):
+
+    area = Parameter(min = 0.0)
+    mean = Parameter(min =0.0)
+
+  # Ensure stddev makes sense if its bounds are not explicitly set.
+  # stddev must be non-zero and positive.
+    stddev = Parameter(default=1, min = 0.0) 
+    @staticmethod
+    def evaluate(x, area, mean, stddev):
+        """
+      AreaGaussian1D model function.
+      """
+        return ((1e14*area*(mean**2)/(np.sqrt(2*np.pi)*299792458*1e6*stddev)) * np.exp(
+          -0.5 * (x - mean) ** 2 / stddev ** 2))
+
+class AreaDrude1D(Fittable1DModel):
+
+    area = Parameter(min = 0.0)
+    x_0 = Parameter(min = 0.0)
+    fwhm = Parameter(default=1, min = 0.0)
+
+    @staticmethod
+    def evaluate(x, area, x_0, fwhm):
+        """
+        AreaDrude1D model function.
+        Integrated Intensity of Drude profile is I = (pi*c/2)*(central intensity * fractional fwhm / central wavelength)
+        """
+        frac_fwhm = fwhm/x_0
+        return (((1e14*2 /(np.pi * 299792458*1e6 ))*(area * x_0 / frac_fwhm)*(frac_fwhm**2)/
+        (((x / x_0 - x_0 / x)**2 + frac_fwhm**2))))

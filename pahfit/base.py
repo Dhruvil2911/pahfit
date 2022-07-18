@@ -631,16 +631,16 @@ class PAHFITBase:
                 strength_unc = None
 
                 # Calculate feature EQW.
-                # if strength != 0.0:
-                #     eqw = eqws(
-                #         comp_type,
-                #         component.x_0.value,
-                #         component.area.value,
-                #         component.fwhm,
-                #         obs_fit,
-                #     )
-                # else:
-                eqw = 0.0
+                if strength != 0.0:
+                    eqw = eqws(
+                        comp_type,
+                        component.x_0.value,
+                        component.area.value,
+                        component.fwhm,
+                        obs_fit,
+                    )
+                else:
+                    eqw = 0.0
 
                 line_table.add_row(
                     [
@@ -671,16 +671,16 @@ class PAHFITBase:
                 strength_unc = None
 
                 # Calculate feature EQW.
-                # if strength != 0.0:
-                #     eqw = eqws(
-                #         comp_type,
-                #         component.mean.value,
-                #         component.area.value,
-                #         component.stddev.value,
-                #         obs_fit,
-                #     )
-                # else:
-                eqw = 0.0
+                if strength != 0.0:
+                    eqw = eqws(
+                        comp_type,
+                        component.mean.value,
+                        component.area.value,
+                        component.stddev.value,
+                        obs_fit,
+                    )
+                else:
+                    eqw = 0.0
 
                 line_table.add_row(
                     [

@@ -3,6 +3,7 @@ from scipy import interpolate
 from astropy.modeling.physical_models import Drude1D
 from astropy.modeling import Fittable1DModel
 from astropy.modeling import Parameter
+from astropy import constants as const
 
 __all__ = ["BlackBody1D", "ModifiedBlackBody1D", "S07_attenuation", "att_Drude1D", "AreaGaussian1D", "AreaDrude1D"]
 
@@ -146,7 +147,7 @@ class AreaGaussian1D(Fittable1DModel):
         """
       AreaGaussian1D model function.
       """
-        return ((1e14*area*(mean**2)/(np.sqrt(2*np.pi)*299792458*1e6*stddev)) * np.exp(
+        return ((1e14*area*(mean**2)/(np.sqrt(2*np.pi)*const.c.to('micron/s').value*stddev)) * np.exp(
           -0.5 * (x - mean) ** 2 / stddev ** 2))
 
 class AreaDrude1D(Fittable1DModel):
@@ -162,5 +163,5 @@ class AreaDrude1D(Fittable1DModel):
         Integrated Intensity of Drude profile is I = (pi*c/2)*(central intensity * fractional fwhm / central wavelength)
         """
         frac_fwhm = fwhm/x_0
-        return (((1e14*2 /(np.pi * 299792458*1e6 ))*(area * x_0 / frac_fwhm)*(frac_fwhm**2)/
+        return (((1e14*2 /(np.pi * const.c.to('micron/s').value ))*(area * x_0 / frac_fwhm)*(frac_fwhm**2)/
         (((x / x_0 - x_0 / x)**2 + frac_fwhm**2))))

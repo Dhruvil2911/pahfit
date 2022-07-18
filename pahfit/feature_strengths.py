@@ -137,7 +137,7 @@ def eqws(comp_type, x_0, area, fwhm_stddev, obs_fit):
         the equivalent width of the feature
     """
     # Check if the emission component is Gaussian and calculate fwhm.
-    if comp_type == 'Gaussian1D':
+    if comp_type == 'AreaGaussian1D':
         fwhm = 2 * fwhm_stddev * np.sqrt(2 * np.log(2))
     else:
         fwhm = fwhm_stddev
@@ -159,13 +159,14 @@ def eqws(comp_type, x_0, area, fwhm_stddev, obs_fit):
         cont_model += cmodel
     continuum = np.nan_to_num(cont_model(lam))
 
-    if comp_type == 'Drude1D':
+    if comp_type == 'AreaDrude1D':
+        print("I run")
         drude = AreaDrude1D(area=area,
                         x_0=x_0,
                         fwhm=fwhm)
         lnu = drude(lam)
 
-    elif comp_type == 'Gaussian1D':
+    elif comp_type == 'AreaGaussian1D':
         gauss = AreaGaussian1D(area=area,
                            mean=x_0,
                            stddev=fwhm_stddev)
